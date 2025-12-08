@@ -133,7 +133,7 @@ RUN    wget -q -P /tmp "https://github.com/forevka/server/releases/download/${OO
     sed "s/COMPANY_NAME/${COMPANY_NAME}/g" -i /etc/supervisor/conf.d/*.conf && \
     service supervisor stop && \
     chmod 755 /app/ds/*.sh && \
-    rm -f /tmp/onlyoffice-documentserver_${OOU_VERSION_MAJOR}-${OOU_BUILD}.oou_amd64.deb && \
+    rm -f /tmp/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_amd64.deb && \
     printf "\nGO" >> /var/www/$COMPANY_NAME/documentserver/server/schema/mssql/createdb.sql && \
     printf "\nGO" >> /var/www/$COMPANY_NAME/documentserver/server/schema/mssql/removetbl.sql && \
     printf "\nexit" >> /var/www/$COMPANY_NAME/documentserver/server/schema/oracle/createdb.sql && \
