@@ -123,10 +123,10 @@ ENV COMPANY_NAME=$COMPANY_NAME \
 ## PACKAGE_FILE="${COMPANY_NAME}-${PRODUCT_NAME}${PRODUCT_EDITION}${PACKAGE_VERSION:+_$PACKAGE_VERSION}_${TARGETARCH:-$(dpkg --print-architecture)}.deb" && \
 ##    wget -q -P /tmp "$PACKAGE_BASEURL/$PACKAGE_FILE" && \
 ##    rm -f /tmp/onlyoffice-documentserver*.deb && \
-RUN    wget -q -P /tmp "https://github.com/forevka/server/releases/download/${OOU_VERSION_MAJOR}.${OOU_BUILD}/onlyoffice-documentserver_${OOU_VERSION_MAJOR}-${OOU_BUILD}.oou_amd64.deb" && \
+RUN    wget -q -P /tmp "https://github.com/forevka/server/releases/download/${OOU_VERSION_MAJOR}.${OOU_BUILD}/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_98_amd64.deb" && \
     apt-get -y update && \
     service postgresql start && \
-    apt-get -yq install /tmp/onlyoffice-documentserver_${OOU_VERSION_MAJOR}-${OOU_BUILD}.oou_amd64.deb && \
+    apt-get -yq install /tmp/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_98_amd64.deb && \
     service postgresql stop && \
     chmod 755 /etc/init.d/supervisor && \
     sed "s/COMPANY_NAME/${COMPANY_NAME}/g" -i /etc/supervisor/conf.d/*.conf && \
