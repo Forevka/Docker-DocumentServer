@@ -106,7 +106,7 @@ RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d && \
 
 COPY config/supervisor/supervisor /etc/init.d/
 COPY config/supervisor/ds/*.conf /etc/supervisor/conf.d/
-COPY run-document-server.sh /app/ds/run-document-server.sh
+COPY run-document-server-external-dependencies.sh /app/ds/run-document-server-external-dependencies.sh
 
 EXPOSE 80 443
 
