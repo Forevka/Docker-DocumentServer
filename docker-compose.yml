@@ -1,7 +1,8 @@
 services:
   onlyoffice-documentserver:
     build:
-      context: ./Dockerfile.external-dependencies
+      context: ./
+      dockerfile: Dockerfile.external-dependencies
     image: onlyoffice/documentserver #[-de,-ee]
     container_name: onlyoffice-documentserver
     depends_on:
