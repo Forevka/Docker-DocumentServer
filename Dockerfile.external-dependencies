@@ -1,0 +1,160 @@
+# =============================================================================
+# OnlyOffice Document Server - Slim Build (External Services)
+# =============================================================================
+# 
+# REMOVED FROM ORIGINAL DOCKERFILE:
+#
+# Oracle support:
+#   - Oracle Instant Client (basic + sqlplus)
+#   - libaio1 package
+#   - OC_* environment variables
+#   - oracle/sqlplus binary
+#   - /usr/share/instantclient (bundled in .deb)
+#
+# MSSQL support:
+#   - Microsoft apt repository setup
+#   - mssql-tools18
+#   - unixodbc-dev
+#
+# MySQL support:
+#   - mysql-client (removed via purge after .deb install)
+#
+# Embedded services:
+#   - postgresql (use external)
+#   - rabbitmq-server + erlang dependencies (use external)
+#   - redis-server (use external)
+#
+# Dev packages pulled by .deb:
+#   - libboost1.83-dev (replaced with runtime-only libboost-regex1.83.0)
+#   - libicu-dev
+#   - libstdc++-13-dev
+#   - libgcc-13-dev
+#
+# Unused packages:
+#   - certbot
+#   - geoip-database
+#   - humanity-icon-theme
+#   - adwaita-icon-theme
+#
+# REQUIRED EXTERNAL SERVICES:
+#   - PostgreSQL (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PWD)
+#   - RabbitMQ (AMQP_URI)
+#   - Redis (REDIS_SERVER_HOST, REDIS_SERVER_PORT)
+#
+# =============================================================================
+
+ARG BASE_VERSION=24.04
+
+ARG BASE_IMAGE=ubuntu:$BASE_VERSION
+
+FROM ${BASE_IMAGE} AS documentserver
+LABEL maintainer Ascensio System SIA <support@onlyoffice.com>
+
+ARG BASE_VERSION
+
+ARG PACKAGE_SUFFIX=t64
+
+ARG OOU_VERSION_MAJOR=9.2.0
+ARG OOU_BUILD=98
+
+ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 DEBIAN_FRONTEND=noninteractive BASE_VERSION=${BASE_VERSION}
+
+ARG ONLYOFFICE_VALUE=onlyoffice
+
+RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d && \
+    apt-get -y update && \
+    apt-get -yq install wget apt-transport-https gnupg locales lsb-release && \
+    locale-gen en_US.UTF-8 && \
+    echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && \
+    apt-get -yq install \
+        adduser \
+        apt-utils \
+        bomstrip \
+        cron \
+        curl \
+        htop \
+        libasound2${PACKAGE_SUFFIX} \
+        libboost-regex1.83.0 \
+        libcairo2 \
+        libcurl3-gnutls \
+        libcurl4 \
+        libgtk-3-0 \
+        libnspr4 \
+        libnss3 \
+        libstdc++6 \
+        libxml2 \
+        libxss1 \
+        libxtst6 \
+        nano \
+        net-tools \
+        netcat-openbsd \
+        nginx-extras \
+        postgresql-client \
+        pwgen \
+        sudo \
+        supervisor \
+        ttf-mscorefonts-installer \
+        unzip \
+        xvfb \
+        xxd \
+        zlib1g && \
+    if [ $(ls -l /usr/share/fonts/truetype/msttcorefonts | wc -l) -ne 61 ]; \
+        then echo 'msttcorefonts failed to download'; exit 1; fi && \
+    sed 's|\(application\/zip.*\)|\1\n    application\/wasm wasm;|' -i /etc/nginx/mime.types && \
+    service nginx stop && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY config/supervisor/supervisor /etc/init.d/
+COPY config/supervisor/ds/*.conf /etc/supervisor/conf.d/
+COPY run-document-server.sh /app/ds/run-document-server.sh
+
+EXPOSE 80 443
+
+ARG COMPANY_NAME=onlyoffice
+ARG PRODUCT_NAME=documentserver
+ARG PRODUCT_EDITION=
+ARG PACKAGE_VERSION=
+ARG TARGETARCH
+ARG PACKAGE_BASEURL="http://download.onlyoffice.com/install/documentserver/linux"
+
+ENV COMPANY_NAME=$COMPANY_NAME \
+    PRODUCT_NAME=$PRODUCT_NAME \
+    PRODUCT_EDITION=$PRODUCT_EDITION \
+    DS_PLUGIN_INSTALLATION=false \
+    DS_DOCKER_INSTALLATION=true
+
+RUN wget -q -P /tmp "https://github.com/forevka/server/releases/download/${OOU_VERSION_MAJOR}.${OOU_BUILD}/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_amd64.deb" && \
+    apt-get -y update && \
+    apt-get -yq install /tmp/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_amd64.deb || true && \
+    chmod 755 /etc/init.d/supervisor && \
+    sed "s/COMPANY_NAME/${COMPANY_NAME}/g" -i /etc/supervisor/conf.d/*.conf && \
+    service supervisor stop && \
+    chmod 755 /app/ds/*.sh && \
+    rm -f /tmp/*.deb && \
+    rm -rf /var/log/$COMPANY_NAME && \
+    # =========================================================================
+    # CLEANUP: Remove dev packages, unused dependencies, and bundled extras
+    # =========================================================================
+    apt-get -y purge --auto-remove \
+        '*-dev' \
+        '*-icon-theme' \
+        geoip-database \
+        mysql-client* \
+        postgresql \
+        rabbitmq-server \
+        redis-server \
+        erlang* \
+    && rm -rf /usr/share/instantclient \
+              /usr/share/doc \
+              /usr/share/man \
+              /usr/share/info \
+              /usr/share/GeoIP \
+              /var/lib/postgresql \
+              /var/lib/rabbitmq \
+              /var/lib/redis \
+              /var/lib/apt/lists/* \
+              /var/cache/apt/*
+
+VOLUME /var/log/$COMPANY_NAME /var/lib/$COMPANY_NAME /var/www/$COMPANY_NAME/Data /usr/share/fonts/truetype/custom
+
+ENTRYPOINT ["/app/ds/run-document-server-external-dependencies.sh"]
