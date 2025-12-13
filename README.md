@@ -1,3 +1,34 @@
+## TO build:
+```
+docker compose up --build --force-recreate --remove-orphans -d onlyoffice-postgresql
+```
+actually build
+```
+docker build --network=host --no-cache --file .\Dockerfile.external-dependencies --tag onlyoffice-documentserver-minimal .
+```
+Note: bulding requires postgres to be running
+
+## to run(check ENV vars to pass proper config for postgre, redis and rabbitmq):
+```
+docker compose up -d onlyoffice-documentserver
+```
+
+## to tag(after successfull build):
+
+```
+docker tag onlyoffice-documentserver-minimal forevka/onlyoffice-documentserver-minimal:9.2.0-98 !check for proper version and build number
+```
+then
+```
+docker tag onlyoffice-documentserver-minimal forevka/onlyoffice-documentserver-minimal:latest
+```
+
+push
+```
+docker push your-dockerhub-username/onlyoffice-documentserver-minimal:9.2.0-98
+docker push your-dockerhub-username/onlyoffice-documentserver-minimal:latest
+```
+
 This build of onlyoffice community edition ( documentserver ) has connections limits increased to 9999 ( instead of default 20 ).
 All credits to www.btactic.com that made this blog post https://www.btactic.com/build-onlyoffice-from-source-code-2022/?lang=en#
 
