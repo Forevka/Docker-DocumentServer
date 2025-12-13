@@ -3,6 +3,7 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile.external-dependencies
+    image: onlyoffice-documentserver
     container_name: onlyoffice-documentserver
     depends_on:
       onlyoffice-postgresql:
@@ -43,6 +44,8 @@ services:
       - POSTGRES_USER=onlyoffice
       - POSTGRES_PASSWORD=onlyoffice
     restart: always
+    ports:
+      - '5432:5432'
     expose:
       - '5432'
     volumes:

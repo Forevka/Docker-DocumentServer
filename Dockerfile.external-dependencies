@@ -5,14 +5,11 @@ FROM ${BASE_IMAGE} AS documentserver
 LABEL maintainer Ascensio System SIA <support@onlyoffice.com>
 
 ARG BASE_VERSION
-ARG PG_VERSION=16
 
 ARG OOU_VERSION_MAJOR=9.2.0
 ARG OOU_BUILD=98
 
-ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 DEBIAN_FRONTEND=noninteractive PG_VERSION=${PG_VERSION} BASE_VERSION=${BASE_VERSION}
-
-ARG ONLYOFFICE_VALUE=onlyoffice
+ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8 DEBIAN_FRONTEND=noninteractive BASE_VERSION=${BASE_VERSION}
 
 RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d && \
     apt-get -y update && \
@@ -43,7 +40,6 @@ RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d && \
         net-tools \
         netcat-openbsd \
         nginx-extras \
-        postgresql \
         postgresql-client \
         pwgen \
         sudo \
@@ -56,11 +52,6 @@ RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d && \
     if [  $(ls -l /usr/share/fonts/truetype/msttcorefonts | wc -l) -ne 61 ]; \
         then echo 'msttcorefonts failed to download'; exit 1; fi  && \
     sed 's|\(application\/zip.*\)|\1\n    application\/wasm wasm;|' -i /etc/nginx/mime.types && \
-    pg_conftool $PG_VERSION main set listen_addresses 'localhost' && \
-    service postgresql restart && \
-    sudo -u postgres psql -c "CREATE USER $ONLYOFFICE_VALUE WITH password '$ONLYOFFICE_VALUE';" && \
-    sudo -u postgres psql -c "CREATE DATABASE $ONLYOFFICE_VALUE OWNER $ONLYOFFICE_VALUE;" && \
-    service postgresql stop && \
     service supervisor stop && \
     service nginx stop && \
     rm -rf /var/lib/apt/lists/*
@@ -87,12 +78,10 @@ ENV COMPANY_NAME=$COMPANY_NAME \
 RUN sed -i 's/\r$//' /etc/init.d/supervisor && \
     sed -i 's/\r$//' /etc/supervisor/conf.d/*.conf && \
     sed -i 's/\r$//' /app/ds/*.sh
-
+    
 RUN wget -q -P /tmp "https://github.com/forevka/server/releases/download/${OOU_VERSION_MAJOR}.${OOU_BUILD}/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_amd64.deb" && \
     apt-get -y update && \
-    service postgresql start && \
     apt-get -yq install /tmp/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_amd64.deb && \
-    service postgresql stop && \
     chmod 755 /etc/init.d/supervisor && \
     sed "s/COMPANY_NAME/${COMPANY_NAME}/g" -i /etc/supervisor/conf.d/*.conf && \
     service supervisor stop && \
@@ -101,6 +90,6 @@ RUN wget -q -P /tmp "https://github.com/forevka/server/releases/download/${OOU_V
     rm -rf /var/log/$COMPANY_NAME && \
     rm -rf /var/lib/apt/lists/*
 
-VOLUME /var/log/$COMPANY_NAME /var/lib/$COMPANY_NAME /var/www/$COMPANY_NAME/Data /var/lib/postgresql /usr/share/fonts/truetype/custom
+VOLUME /var/log/$COMPANY_NAME /var/lib/$COMPANY_NAME /var/www/$COMPANY_NAME/Data /usr/share/fonts/truetype/custom
 
 ENTRYPOINT ["/app/ds/run-document-server.sh"]
