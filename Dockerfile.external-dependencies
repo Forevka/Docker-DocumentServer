@@ -63,7 +63,7 @@ COPY run-document-server.sh /app/ds/run-document-server.sh
 EXPOSE 80 443
 
 ARG COMPANY_NAME=onlyoffice
-ARG PRODUCT_NAME=documentserver
+ARG PRODUCT_NAME=documentserver-de
 ARG PRODUCT_EDITION=
 ARG PACKAGE_VERSION=
 ARG TARGETARCH
@@ -78,7 +78,7 @@ ENV COMPANY_NAME=$COMPANY_NAME \
 RUN sed -i 's/\r$//' /etc/init.d/supervisor && \
     sed -i 's/\r$//' /etc/supervisor/conf.d/*.conf && \
     sed -i 's/\r$//' /app/ds/*.sh
-    
+
 RUN wget -q -P /tmp "https://github.com/forevka/server/releases/download/${OOU_VERSION_MAJOR}.${OOU_BUILD}/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_amd64.deb" && \
     apt-get -y update && \
     apt-get -yq install /tmp/onlyoffice-documentserver-de_${OOU_VERSION_MAJOR}-${OOU_BUILD}_amd64.deb && \
